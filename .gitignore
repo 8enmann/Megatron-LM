@@ -1,0 +1,4 @@
+.vscode
+__pycache__
+temp_cache_dir
+/.idea

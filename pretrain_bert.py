@@ -43,7 +43,8 @@ def get_model(tokenizer, args):
         sum([p.nelement() for p in model.parameters()])), flush=True)
 
     # GPU allocation.
-    model.cuda(torch.cuda.current_device())
+    if torch.cuda.is_available():
+        model.cuda(torch.cuda.current_device())
 
     # Fp16 conversion.
     if args.fp16:
@@ -162,12 +163,13 @@ def get_batch(data):
     lm_labels = torch.autograd.Variable(data['mask_labels'].long())
     padding_mask = torch.autograd.Variable(data['pad_mask'].byte())
     # Move to cuda
-    tokens = tokens.cuda()
-    types = types.cuda()
-    next_sentence = next_sentence.cuda()
-    loss_mask = loss_mask.cuda()
-    lm_labels = lm_labels.cuda()
-    padding_mask = padding_mask.cuda()
+    if torch.cuda.is_available():
+        tokens = tokens.cuda()
+        types = types.cuda()
+        next_sentence = next_sentence.cuda()
+        loss_mask = loss_mask.cuda()
+        lm_labels = lm_labels.cuda()
+        padding_mask = padding_mask.cuda()
 
     return tokens, types, next_sentence, loss_mask, lm_labels, padding_mask
 
@@ -365,10 +367,11 @@ def initialize_distributed(args):
     """Initialize torch.distributed."""
 
     # Manually set the device ids.
-    device = args.rank % torch.cuda.device_count()
+    device = args.rank % torch.cuda.device_count() if torch.cuda.is_available() else 0
     if args.local_rank is not None:
         device = args.local_rank
-    torch.cuda.set_device(device)
+    if torch.cuda.is_available():
+        torch.cuda.set_device(device)
     # Call the init process
     if args.world_size > 1:
         init_method = 'tcp://'

@@ -37,14 +37,16 @@ class Timers:
         def start(self):
             """Start the timer."""
             assert not self.started_, 'timer has already been started'
-            torch.cuda.synchronize()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
             self.start_time = time.time()
             self.started_ = True
 
         def stop(self):
             """Stop the timer."""
             assert self.started_, 'timer is not started'
-            torch.cuda.synchronize()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
             self.elapsed_ += (time.time() - self.start_time)
             self.started_ = False
 

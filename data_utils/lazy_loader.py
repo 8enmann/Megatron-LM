@@ -51,7 +51,7 @@ def make_lazy(path, strs, data_type='data'):
         os.makedirs(lazypath)
     datapath = os.path.join(lazypath, data_type)
     lenpath = os.path.join(lazypath, data_type+'.len.pkl')
-    if not torch.distributed.is_initialized() or torch.distributed.get_rank() == 0:
+    if not torch.distributed.is_available() or not torch.distributed.is_initialized() or torch.distributed.get_rank() == 0:
         with open(datapath, 'wb') as f:
             str_lens = []
             str_cnt = 0
