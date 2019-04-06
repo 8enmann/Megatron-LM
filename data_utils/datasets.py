@@ -650,6 +650,7 @@ class bert_sentencepair_dataset(data.Dataset):
         """
         tokens_a, token_types_a = a
         tokens_b, token_types_b = b
+        # TODO: make a commandless version of this.
         tokens = [self.tokenizer.get_command('ENC').Id] + tokens_a + [self.tokenizer.get_command('sep').Id] + tokens_b + [self.tokenizer.get_command('sep').Id]
         token_types = [token_types_a[0]] + token_types_a + [token_types_a[0]] + token_types_b + [token_types_b[0]]
 

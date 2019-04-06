@@ -17,10 +17,10 @@ fi
 echo 'data from $DATA'
 python pretrain_bert.py \
     --batch-size 1 \
-    --tokenizer-type BertWordPieceTokenizer \
+    --tokenizer-type BytePairTokenizer \
     --cache-dir temp_cache_dir \
     --tokenizer-model-type bert-large-uncased \
-    --vocab-size 30522 \
+    --vocab-size 50257 \
     --train-data $DATA \
     --test-data $DATA \
     --valid-data $DATA \

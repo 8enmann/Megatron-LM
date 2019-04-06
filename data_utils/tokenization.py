@@ -22,6 +22,7 @@ import nltk
 nltk.download('punkt')
 from nltk import tokenize as nltk_tokenize
 import sentencepiece as spm
+from . import bpe_encoder
 
 from .wordpiece import BertTokenizer, PRETRAINED_VOCAB_ARCHIVE_MAP
 
@@ -34,6 +35,8 @@ def make_tokenizer(tokenizer_type, corpus, model_path=None, vocab_size=None, mod
         tokenizer_class = eval(tokenizer_class)
     if tokenizer_class is BertWordPieceTokenizer:
         return BertWordPieceTokenizer(model_type, **kwargs)
+    if tokenizer_class is BytePairTokenizer:
+        return BytePairTokenizer(model_type, **kwargs)
     text_tokenizer =  tokenizer_class(corpus=corpus, vocab_size=vocab_size, model_path=model_path, model_type=model_type,
                                       pad_token=pad_token, character_coverage=character_coverage)
     return Tokenizer(text_tokenizer, command_tokens, type_tokens)
@@ -785,4 +788,86 @@ class BertWordPieceTokenizer(Tokenizer):
             return ' '.join(t.token if isinstance(t, TypeToken) else t for t in Tokens)
         if isinstance(Tokens, Tokenization):
             Tokens = Tokens.tokenization
+        return ' '.join(Tokens)
+
+class BytePairTokenizer(Tokenizer):
+    """
+    Loads a pretrained byte pair tokenizer from `models` for tokenization.
+    """
+    def __init__(self, tokenizer_model_type=None, cache_dir=None, encoder=None, **kwargs):
+        self.encoder = encoder if encoder else bpe_encoder.get_encoder('117M')
+        # set command tokens from wordpiece tokenizer values
+        self.num_tokens = len(self.encoder.encoder)
+        self.num_text_tokens = self.num_tokens
+
+        # Probably don't need stuff below. 
+        # TODO(ben): Remove after testing.
+        self._command_tokens = [
+            CommandToken('pad', '[PAD]', 0),
+            CommandToken('ENC', '[CLS]', 1),
+            CommandToken('MASK', '[MASK]',2),
+            CommandToken('unk', '[UNK]', 3),
+            CommandToken('sep', '[SEP]', 4),
+        ]
+        self.num_command_tokens = len(self._command_tokens)
+        
+        self.command_name_map = {tok.name: tok for tok in self._command_tokens}
+        self.command_token_map = {tok.token: tok for tok in self._command_tokens}
+        self.command_id_map = {tok.Id: tok for tok in self._command_tokens}
+
+        # set type tokens
+        self.type_tokens = [
+            TypeToken('str0', '<str0>', 0),
+            TypeToken('str1', '<str1>', 1),
+        ]
+        self.num_type_tokens = len(self.type_tokens)
+        
+        self.type_name_map = {tok.name: tok for tok in self.type_tokens}
+        self.type_token_map = {tok.token: tok for tok in self.type_tokens}
+        self.type_id_map = {tok.Id: tok for tok in self.type_tokens}
+
+        # parse tokens and vocabs from tokenizer
+
+        self._tokens = list(self.encoder.encoder.keys())
+        self._vocab = self.encoder.encoder
+
+        self._text_tokens = list(self._tokens)
+        self._text_token_vocab = self._vocab
+
+        self._command_token_tokens = list(self.command_token_map.keys())
+        self._command_token_vocab = {t:Id for Id,t in self.command_id_map.items()}
+
+        self._token_types = list(self.type_token_map.keys())
+        self._token_type_vocab = {t:Id for Id, t in self.type_id_map.items()}
+
+    def EncodeAsIds(self, text, process_fn=None):
+        """convert text to wordpiece Ids"""
+        processed_text = text
+        if process_fn is not None:
+            processed_text = process_fn(processed_text)
+        #tokens = self.text_tokenizer.tokenize(processed_text)
+        Ids = self.encoder.encode(processed_text)
+        return Tokenization(Ids, processed_text, text)
+
+    def EncodeAsTokens(self, text, process_fn=None):
+        """convert wordpiece token to Id"""
+        raise NotImplementedError()
+
+    def IdToToken(self, Id, type_token=False):
+        """convert Id to sentencpiece token"""
+        raise NotImplementedError()
+
+    def TokenToId(self, token, type_token=False):
+        """convert sentencpiece token to Id"""
+        raise NotImplementedError()
+
+    def DecodeIds(self, Ids, type_token=False):
+        """converts ids to wordpiece tokens and joins them as a text string"""
+        if isinstance(Ids, Tokenization):
+            Ids = Ids.tokenization
+        return self.encoder.decode(Ids)
+
+    def DecodeTokens(self, Tokens, type_token=False):
+        if isinstance(Ids, Tokenization):
+            Ids = Ids.tokenization
         return ' '.join(Tokens)
