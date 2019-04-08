@@ -27,8 +27,8 @@ python pretrain_bert.py \
     --num-attention-heads 16 \
     --hidden-dropout 0.1 \
     --attention-dropout 0.1 \
-    --train-iters 200 \
-    --eval-iters 10 \
+    --train-iters 1000000 \
+    --epochs 10 \
     --lr 0.0001 \
     --lr-decay-style linear \
     --lr-decay-iters 990000 \

@@ -343,7 +343,7 @@ def evaluate(data_source, model, criterion, args):
             try:
                 batch = next(data_iterator)
             except StopIteration:
-                import pdb; pdb.set_trace()
+                print('warning: looping data')
                 data_iterator = iter(data_source)
                 batch = next(data_iterator)
             # Forward evaluation.
