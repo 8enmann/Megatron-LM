@@ -22,6 +22,7 @@ class wikipedia(json_dataset):
 	command line usage: `--train-data wikipedia`
 	"""
 	PATH = '<wikipedia_path>'
+	PATH = '/ncluster/data/wikiextracted/AA/wiki_00'
 	assert_str = "make sure to set PATH at line 27 of data_utils/corpora.py"
 	def __init__(self, **kwargs):
 		assert wikipedia.PATH != '<wikipedia_path>', \

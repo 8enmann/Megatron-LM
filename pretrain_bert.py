@@ -340,8 +340,14 @@ def evaluate(data_source, model, criterion, args):
         data_iterator = iter(data_source)
         iteration = 0
         while iteration < max_iters:
+            try:
+                batch = next(data_iterator)
+            except StopIteration:
+                import pdb; pdb.set_trace()
+                data_iterator = iter(data_source)
+                batch = next(data_iterator)
             # Forward evaluation.
-            lm_loss, nsp_loss = forward_step(next(data_iterator), model,
+            lm_loss, nsp_loss = forward_step(batch, model,
                                              criterion, args)
             # Reduce across processes.
             if isinstance(model, DDP):
